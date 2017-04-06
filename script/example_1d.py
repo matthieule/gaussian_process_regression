@@ -33,7 +33,7 @@ def example_interpolation(xmin, xmax, ymin, ymax,
 
     # Plot the interpolation
     x_vec = np.linspace(xmin, xmax, 50)
-    gp.plot(list_x=x_vec, ymin=ymin, ymax=ymax, confidence_band=False)
+    gp.plot(list_x=x_vec.tolist(), ymin=ymin, ymax=ymax, confidence_band=False)
     plt.savefig(title, dpi=150, bbox_inches='tight')
     plt.close()
 
@@ -117,7 +117,7 @@ def main():
     # Plot the interpolation
     logger.info('Plot the interpolation')
     x_vec = np.linspace(xmin, xmax, 50)
-    gp.plot(list_x=x_vec, ymin=ymin, ymax=ymax, n_samples=0)
+    gp.plot(list_x=x_vec.tolist(), ymin=ymin, ymax=ymax, n_samples=0)
     plt.savefig('figures/1d_estimation.png', dpi=150, bbox_inches='tight')
     plt.close()
 

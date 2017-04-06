@@ -87,7 +87,7 @@ def main():
 
     # Gather a list of observation
     logger.info('Gather some observations')
-    list_observations, list_y = get_observations(xmin, xmax, ymin, ymax, 60)
+    list_observations, list_y = get_observations(xmin, xmax, ymin, ymax, 80)
 
     # Optimize the parameters of the covariance function
     logger.info('Optimize the Gaussian process')
@@ -112,7 +112,7 @@ def main():
     n = 50
     x_vec_bis = np.linspace(xmin, xmax, n)
     y_vec_bis = np.linspace(ymin, ymax, n)
-    gp.plot(x_vec_bis, y_vec_bis)
+    gp.plot(x_vec_bis.tolist(), y_vec_bis.tolist())
     plt.savefig('figures/2d_estimation.png', dpi=150, bbox_inches='tight')
 
 if __name__ == '__main__':

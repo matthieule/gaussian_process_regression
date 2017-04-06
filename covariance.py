@@ -39,6 +39,8 @@ class SquaredExponential(Covariance):
         :param w1: correlation parameter
         """
 
+        assert isinstance(w1, np.ndarray)
+
         # We take the absolute value to make sure the parameters are positive
         # (this is a lay way to enforce constraint during optimization)
         self.w0 = abs(w0)
@@ -51,6 +53,9 @@ class SquaredExponential(Covariance):
         :param y: secon parameter
         :return: covariance between x and y
         """
+
+        assert len(x) == len(y)
+        assert len(x) == len(self.w1)
 
         x_array = np.array(x)
         y_array = np.array(y)

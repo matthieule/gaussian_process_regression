@@ -47,7 +47,7 @@ In this 2D example, we want to regress the simple 2D function:
 
 <img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/2d_density.png" alt="alt text" width=500px>
 
-Here is the result of the regression using a squared exponential covariance function, and 60 data points:
+Here is the result of the regression using a squared exponential covariance function, and 80 data points:
 
 <img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/2d_estimation.png" alt="alt text" width=600px>
 

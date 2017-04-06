@@ -38,6 +38,8 @@ class GaussianProcess:
         :return: tuple with the centered list and the empirical mean
         """
 
+        assert isinstance(list_y, list)
+
         mean = np.mean(list_y)
         centered_list_y = list_y - mean
 
@@ -51,6 +53,9 @@ class GaussianProcess:
         :return: covariance matrix between the elements of list_obs_1 and
          list_obs_2
         """
+
+        assert isinstance(list_obs_1, list)
+        assert isinstance(list_obs_2, list)
 
         cov_matrix = np.zeros((len(list_obs_1), len(list_obs_2)))
         cov_matrix_flat = [
@@ -221,6 +226,8 @@ class GaussianProcess1d(GaussianProcess):
          in list_x
         """
 
+        assert isinstance(list_x, list)
+
         mean = self.mean(list_x)
         sigma = np.squeeze(
             np.array([self.sigma([x]) for x in list_x])
@@ -238,6 +245,8 @@ class GaussianProcess1d(GaussianProcess):
         :param confidence_band: boolean, whether or not to plot the confidence
          band
         """
+
+        assert isinstance(list_x, list)
 
         mean, sigma = self._estimate_gp(list_x)
 
@@ -270,6 +279,8 @@ class GaussianProcess2d(GaussianProcess):
          estimation of the mean and variance of the Gaussian process
         """
 
+        assert isinstance(list_x, list)
+        assert isinstance(list_y, list)
         assert len(list_x) == len(list_y)
 
         n = len(list_x)
@@ -277,10 +288,14 @@ class GaussianProcess2d(GaussianProcess):
         mean = np.zeros((n, n))
         variance = np.zeros((n, n))
 
-        for idx, i in tqdm(enumerate(list_x)):
-            for idy, j in enumerate(list_y):
-                mean[idx, idy] = self.mean([(i, j)])[0]
-                variance[idx, idy] = self.sigma([(i, j)])[0]
+        mean_sigma_flat = [
+            (i, j, self.mean([(xi, yj)])[0], self.sigma([(xi, yj)])[0])
+            for (i, xi) in enumerate(list_x)
+            for (j, yj) in enumerate(list_y)
+            ]
+        for coord_value in mean_sigma_flat:
+            mean[coord_value[:2]] = coord_value[2]
+            variance[coord_value[:2]] = coord_value[3]
 
         return mean, variance
 
@@ -304,6 +319,10 @@ class GaussianProcess2d(GaussianProcess):
         :param list_y: list of point on the second dimension where to evaluate
          the interpolation
         """
+
+        assert isinstance(list_x, list)
+        assert isinstance(list_y, list)
+        assert len(list_x) == len(list_y)
 
         estimation, sigma = self._estimate_gp(list_x, list_y)
         x = [x[0] for x in self.list_observations]
