@@ -1,13 +1,18 @@
 """Gaussian process"""
-from tqdm import tqdm
-
 import numpy as np
 import matplotlib.pyplot as plt
+
+from functools import partial
 
 from covariance import Covariance
 
 
 FUZZ = 1e-7
+
+
+class UnsupportedDerivativeOrder(Exception):
+    """Raised when the derivative order is not supported"""
+    pass
 
 
 class GaussianProcess:
@@ -60,6 +65,30 @@ class GaussianProcess:
         cov_matrix = np.zeros((len(list_obs_1), len(list_obs_2)))
         cov_matrix_flat = [
             (i, j, self.covariance(xi, yj))
+            for (i, xi) in enumerate(list_obs_1)
+            for (j, yj) in enumerate(list_obs_2)
+            ]
+        for coord_value in cov_matrix_flat:
+            cov_matrix[coord_value[:2]] = coord_value[2]
+
+        return cov_matrix
+
+    def _compute_covariance_matrix_pd(self, list_obs_1, list_obs_2, pd_dim,
+                                      order=1):
+
+        assert isinstance(list_obs_1, list)
+        assert isinstance(list_obs_2, list)
+
+        if order == 1:
+            fction = self.covariance.compute_pd
+        elif order == 2:
+            fction = partial(self.covariance.compute_pdpd, j=pd_dim)
+        else:
+            raise UnsupportedDerivativeOrder
+
+        cov_matrix = np.zeros((len(list_obs_1), len(list_obs_2)))
+        cov_matrix_flat = [
+            (i, j, fction(xi, yj, pd_dim))
             for (i, xi) in enumerate(list_obs_1)
             for (j, yj) in enumerate(list_obs_2)
             ]
@@ -138,25 +167,38 @@ class GaussianProcess:
         )
         return likelihood
 
-    def mean(self, x):
+    def mean(self, x, derivative=False, i=None):
         """Compute the conditional mean of the Gaussian process
 
         Knowing the observations, compute the value of the mean of the Gaussian
         process at x
 
         :param x: parameter where to evaluate the mean of the Gaussian process
+        :param derivative: boolean, whether or not to compute the derivative
+         of sigma
+        :param i: dimension along which to compute the derivative if True
         :return: interpolated value at x which is the mean of the Gaussian
          process (i.e. mean of the posterior probability of the Gaussian
          process knowing the observations)
         """
 
+        assert isinstance(x, list)
+        assert len(x) > 0
+        assert isinstance(x[0], tuple)
+
+        if derivative:
+            assert 0 <= i < len(x[0])
+            cov_function = partial(
+                self._compute_covariance_matrix_pd, pd_dim=i
+            )
+        else:
+            cov_function = self._compute_covariance_matrix
+
         # assert the Gaussian process is up to date
         self._gp_up_to_date()
 
         # Compute the correlation between the parameter x and the observation
-        current_cov = self._compute_covariance_matrix(
-            x, self.list_observations
-        )
+        current_cov = cov_function(x, self.list_observations)
         # Solve the linear system
         centered_list_y, mean = self._center_data(self.list_y)
         y = np.linalg.solve(self.cov_matrix, centered_list_y)
@@ -171,6 +213,10 @@ class GaussianProcess:
         :param x: parameter where to sample the Gaussian process
         :return: a sample from the Gaussian process
         """
+
+        assert isinstance(x, list)
+        assert len(x) > 0
+        assert isinstance(x[0], tuple)
 
         mean = self.mean(x)
         sigma = self.sigma(x)
@@ -187,24 +233,42 @@ class GaussianProcess:
 
         return sample
 
-    def sigma(self, x):
+    def sigma(self, x, derivative=False, i=None):
         """Compute the conditional variance of the Gaussian process
 
         Knowing the observations, compute the value of the variance of the
         Gaussian process at x
 
         :param x: parameter where to evaluate the mean of the Gaussian process
+        :param derivative: boolean, whether or not to compute the derivative
+         of sigma
+        :param i: dimension along which to compute the derivative if True
         :return: variance of the Gaussian process at x (i.e. mean of the
          posterior probability of the Gaussian process knowing the
          observations)
         """
 
+        assert isinstance(x, list)
+        assert len(x) > 0
+        assert isinstance(x[0], tuple)
+        if derivative:
+            assert 0 <= i < len(x[0])
+            auto_cov_function = partial(
+                self._compute_covariance_matrix_pd, pd_dim=i, order=2
+            )
+            cov_function = partial(
+                self._compute_covariance_matrix_pd, pd_dim=i
+            )
+        else:
+            auto_cov_function = self._compute_covariance_matrix
+            cov_function = self._compute_covariance_matrix
+
         # assert the Gaussian process is up to date
         self._gp_up_to_date()
 
-        current_sigma = self._compute_covariance_matrix(x, x)
+        current_sigma = auto_cov_function(x, x)
         # Compute the correlation between the parameter x and the observation
-        current_cov = self._compute_covariance_matrix(
+        current_cov = cov_function(
             x, self.list_observations
         )
         # Solve the linear system
@@ -253,16 +317,16 @@ class GaussianProcess1d(GaussianProcess):
         for _ in range(n_samples):
             plt.plot(list_x, self.sample(list_x), color='black', linewidth='1')
         if confidence_band:
-            plt.plot(list_x, mean + sigma, color='g',
+            plt.plot(list_x, mean + 2*np.sqrt(sigma), color='g',
                      linewidth='2')
-            plt.plot(list_x, mean - sigma, color='g',
+            plt.plot(list_x, mean - 2*np.sqrt(sigma), color='g',
                      linewidth='2')
         plt.plot(list_x, mean, color='b', linewidth='3')
         plt.scatter(
             self.list_observations, self.list_y, s=50, facecolors='white',
             zorder=3
         )
-        plt.axis([list_x[0], list_x[-1], ymin, ymax])
+        plt.axis([list_x[0][0], list_x[-1][0], ymin, ymax])
 
 
 class GaussianProcess2d(GaussianProcess):
@@ -339,7 +403,7 @@ class GaussianProcess2d(GaussianProcess):
         )
         self._plot_data(
             fig, ax[1],
-            img=sigma, x=x, y=y,
+            img=np.sqrt(sigma), x=x, y=y,
             xmin=list_x[0], xmax=list_x[-1],
             ymin=list_y[0], ymax=list_y[-1], title='Standard Deviation'
         )

@@ -24,7 +24,7 @@ def example_interpolation(xmin, xmax, ymin, ymax,
     list_observations, list_y = get_observations(xmin, xmax, n)
 
     # Define a Gaussian process with the optimized parameters
-    cov = SquaredExponential(w0, w1)
+    cov = SquaredExponential(w0, np.array([w1]))
     gp = GaussianProcess1d(
         covariance=cov, list_observations=list_observations,
         list_y=list_y
@@ -33,7 +33,8 @@ def example_interpolation(xmin, xmax, ymin, ymax,
 
     # Plot the interpolation
     x_vec = np.linspace(xmin, xmax, 50)
-    gp.plot(list_x=x_vec.tolist(), ymin=ymin, ymax=ymax, confidence_band=False)
+    x_vec = [(x,) for x in x_vec]
+    gp.plot(list_x=x_vec, ymin=ymin, ymax=ymax, confidence_band=False)
     plt.savefig(title, dpi=150, bbox_inches='tight')
     plt.close()
 
@@ -117,7 +118,8 @@ def main():
     # Plot the interpolation
     logger.info('Plot the interpolation')
     x_vec = np.linspace(xmin, xmax, 50)
-    gp.plot(list_x=x_vec.tolist(), ymin=ymin, ymax=ymax, n_samples=0)
+    x_vec = [(x,) for x in x_vec]
+    gp.plot(list_x=x_vec, ymin=ymin, ymax=ymax, n_samples=0)
     plt.savefig('figures/1d_estimation.png', dpi=150, bbox_inches='tight')
     plt.close()
 
