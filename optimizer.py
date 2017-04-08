@@ -33,7 +33,7 @@ class LikelihoodOptimizer(object, metaclass=ABCMeta):
         :return: likelihood of the current Gaussian process
         """
 
-        gp = self._instanciate_gp(covariance_param)
+        gp = self.instanciate_gp(covariance_param)
         gp.covariance_matrix()
         return gp.likelihood()
 
@@ -43,7 +43,7 @@ class LikelihoodOptimizer(object, metaclass=ABCMeta):
 
         raise NotImplementedError
 
-    def _instanciate_gp(self, covariance_param):
+    def instanciate_gp(self, covariance_param):
         """Instantiate the Gaussian process
 
         :param covariance_param: parameters used to instantiate the covariance
@@ -73,6 +73,7 @@ class LikelihoodOptimizer(object, metaclass=ABCMeta):
 
         res = minimize(likelihood_optimization_func, self.initial_guess,
                        method='COBYLA', options={'disp': True})
+        self.initial_guess = res.x
         return res
 
 
