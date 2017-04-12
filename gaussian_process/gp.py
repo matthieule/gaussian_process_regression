@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from functools import partial
 
-from covariance import Covariance
+from .covariance import Covariance
 
 
 FUZZ = 1e-7

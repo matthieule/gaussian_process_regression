@@ -2,10 +2,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from covariance import SquaredExponential
-from gaussian_process import GaussianProcess1d
-from optimizer import SECovLikelihoodOptimizer
-from util import get_logger
+from gaussian_process.covariance import SquaredExponential
+from gaussian_process.gp import GaussianProcess1d
+from gaussian_process.optimizer import SECovLikelihoodOptimizer
+from gaussian_process.util import get_logger
 
 np.random.seed(0)
 

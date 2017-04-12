@@ -1,9 +1,10 @@
 """Likelihood optimizer"""
 from abc import ABCMeta, abstractmethod
+
 from scipy.optimize import minimize
 
-from covariance import Covariance
-from gaussian_process import GaussianProcess
+from .gp import GaussianProcess
+from .covariance import Covariance
 
 
 class LikelihoodOptimizer(object, metaclass=ABCMeta):
