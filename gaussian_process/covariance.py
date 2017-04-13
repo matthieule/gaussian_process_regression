@@ -92,12 +92,10 @@ class SquaredExponential(Covariance):
         :return: second order partial derivative between x and y
         """
 
-        common_term = self.compute_pd(x, y, i=i)
-
+        result = (
+            self.compute_pd(x, y, i=i) * (x[j] - y[j]) / self.w1[j] ** 2
+        )
         if i == j:
-            first_term = self.compute(x, y) * y[i] / self.w1[i] ** 2
-            result = first_term + common_term * (x[j] - y[j]) / self.w1[j] ** 2
-        else:
-            result = common_term * (x[j] - y[j]) / self.w1[j] ** 2
+            result += self.compute(x, y) / self.w1[i] ** 2
 
         return result

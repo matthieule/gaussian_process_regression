@@ -80,14 +80,14 @@ class GaussianProcess:
         assert isinstance(list_obs_2, list)
 
         if order == 1:
-            fction = self.covariance.compute_pd
+            fction = partial(self.covariance.compute_pd, i=pd_dim)
         elif order == 2:
-            fction = partial(self.covariance.compute_pdpd, j=pd_dim)
+            fction = partial(self.covariance.compute_pdpd, i=pd_dim, j=pd_dim)
         else:
             raise UnsupportedDerivativeOrder
         cov_matrix = np.zeros((len(list_obs_1), len(list_obs_2)))
         cov_matrix_flat = [
-            (i, j, fction(xi, yj, pd_dim))
+            (i, j, fction(xi, yj))
             for (i, xi) in enumerate(list_obs_1)
             for (j, yj) in enumerate(list_obs_2)
             ]
@@ -252,8 +252,11 @@ class GaussianProcess:
         assert isinstance(x[0], tuple)
         if derivative:
             assert 0 <= i < len(x[0])
+            # auto_cov_function = partial(
+                # self._compute_covariance_matrix_pd, pd_dim=i, order=2
+            # )
             auto_cov_function = partial(
-                self._compute_covariance_matrix_pd, pd_dim=i, order=2
+                self._compute_covariance_matrix_pd, pd_dim=i
             )
             cov_function = partial(
                 self._compute_covariance_matrix_pd, pd_dim=i
