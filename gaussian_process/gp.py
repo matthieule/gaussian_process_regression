@@ -7,11 +7,11 @@ from functools import partial
 from .covariance import Covariance
 
 
-FUZZ = 1e-7
+FUZZ = 1e-20
 
 
-class UnsupportedDerivativeOrder(Exception):
-    """Raised when the derivative order is not supported"""
+class NotTestedFeature(Exception):
+    """Raised when using a feature that is not tested"""
     pass
 
 
@@ -73,18 +73,14 @@ class GaussianProcess:
 
         return cov_matrix
 
-    def _compute_covariance_matrix_pd(self, list_obs_1, list_obs_2, pd_dim,
-                                      order=1):
+    def _compute_covariance_matrix_pd(self, list_obs_1, list_obs_2, pd_dim):
+        """Compute the partial derivative of the covariance matrix"""
 
         assert isinstance(list_obs_1, list)
         assert isinstance(list_obs_2, list)
 
-        if order == 1:
-            fction = partial(self.covariance.compute_pd, i=pd_dim)
-        elif order == 2:
-            fction = partial(self.covariance.compute_pdpd, i=pd_dim, j=pd_dim)
-        else:
-            raise UnsupportedDerivativeOrder
+        fction = partial(self.covariance.compute_pd, i=pd_dim)
+
         cov_matrix = np.zeros((len(list_obs_1), len(list_obs_2)))
         cov_matrix_flat = [
             (i, j, fction(xi, yj))
@@ -251,26 +247,23 @@ class GaussianProcess:
         assert len(x) > 0
         assert isinstance(x[0], tuple)
         if derivative:
+            if len(x) > 1:
+                error_msg = 'Derivatives of the variance'
+                error_msg += ' has not been tested for a vector input'
+                raise NotTestedFeature(error_msg)
             assert 0 <= i < len(x[0])
-            # auto_cov_function = partial(
-                # self._compute_covariance_matrix_pd, pd_dim=i, order=2
-            # )
-            auto_cov_function = partial(
-                self._compute_covariance_matrix_pd, pd_dim=i
-            )
             cov_function = partial(
                 self._compute_covariance_matrix_pd, pd_dim=i
             )
         else:
-            auto_cov_function = self._compute_covariance_matrix
             cov_function = self._compute_covariance_matrix
 
         # assert the Gaussian process is up to date
         self._gp_up_to_date()
 
-        current_sigma = auto_cov_function(x, x)
+        current_sigma = cov_function(x, x)
         # Compute the correlation between the parameter x and the observation
-        current_cov = cov_function(
+        current_cov = self._compute_covariance_matrix(
             x, self.list_observations
         )
         # Solve the linear system
@@ -278,7 +271,19 @@ class GaussianProcess:
         # Assert the resolution of the linear system went well
         assert np.allclose(current_cov.T, self.cov_matrix @ y)
 
-        return current_sigma - current_cov @ y
+        if derivative:
+            current_cov_pd = self._compute_covariance_matrix_pd(
+                x, self.list_observations, pd_dim=i
+            )
+            # Solve the linear system
+            y_2 = np.linalg.solve(self.cov_matrix, current_cov_pd.T)
+            # Assert the resolution of the linear system went well
+            assert np.allclose(current_cov_pd.T, self.cov_matrix @ y_2)
+            second_term = -current_cov @ y_2 - current_cov_pd @ y
+        else:
+            second_term = - current_cov @ y
+
+        return current_sigma + second_term
 
 
 class GaussianProcess1d(GaussianProcess):
@@ -365,23 +370,37 @@ class GaussianProcess2d(GaussianProcess):
         assert len(list_x) == len(list_y)
 
         # Dictionary with key the name of the estimation, and value a list with
-        # [{function_used_to_estimate}, {derivative}, {i}], where derivative
-        # and i are parameters of function_used_to_estimate
+        # [{function_used_to_estimate}, {derivative}, {i},
+        # {sigma_derivation_function}], where derivative and i are parameters
+        # of function_used_to_estimate, and sigma_derivation_function is the
+        # function to apply to get the standard deviation
+        def sqrt(x, x_der):
+            """Derivative of sqrt(x)"""
+            return np.sqrt(x)
+
+        def sqrt_der(x, x_der):
+            """Derivative of sqrt(x)"""
+            return x_der/(2*x + FUZZ)
+
         params = {
-            'mean': [self.mean, False, None],
-            'mean_x': [self.mean, True, 0],
-            'mean_y': [self.mean, True, 1],
-            'sigma': [self.sigma, False, None],
-            'sigma_x': [self.sigma, True, 0],
-            'sigma_y': [self.sigma, True, 1],
+            'mean': [self.mean, False, None, None],
+            'mean_x': [self.mean, True, 0, None],
+            'mean_y': [self.mean, True, 1, None],
+            'std': [self.sigma, False, None, sqrt],
+            'std_x': [self.sigma, True, 0, sqrt_der],
+            'std_y': [self.sigma, True, 1, sqrt_der],
         }
         result = {}
-        for param_key in params:
+        for param_key in np.sort(list(params.keys())):
             param = params[param_key]
             current_estimation = self._get_estimation(
                     param[0], param[1], param[2], list_x, list_y
             )
             result[param_key] = current_estimation
+            if params[param_key][3]:
+                result[param_key] = params[param_key][3](
+                    result['std'], current_estimation
+                )
 
         return result
 
