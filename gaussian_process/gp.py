@@ -85,7 +85,6 @@ class GaussianProcess:
             fction = partial(self.covariance.compute_pdpd, j=pd_dim)
         else:
             raise UnsupportedDerivativeOrder
-
         cov_matrix = np.zeros((len(list_obs_1), len(list_obs_2)))
         cov_matrix_flat = [
             (i, j, fction(xi, yj, pd_dim))
@@ -351,17 +350,29 @@ class GaussianProcess2d(GaussianProcess):
 
         mean = np.zeros((n, n))
         variance = np.zeros((n, n))
+        mean_der_x = np.zeros((n, n))
+        variance_der_x = np.zeros((n, n))
+        mean_der_y = np.zeros((n, n))
+        variance_der_y = np.zeros((n, n))
 
         mean_sigma_flat = [
-            (i, j, self.mean([(xi, yj)])[0], self.sigma([(xi, yj)])[0])
+            (i, j, self.mean([(xi, yj)])[0], self.sigma([(xi, yj)])[0],
+             self.mean([(xi, yj)], derivative=True, i=0)[0],
+             self.mean([(xi, yj)], derivative=True, i=1)[0],
+             self.sigma([(xi, yj)], derivative=True, i=0)[0],
+             self.sigma([(xi, yj)], derivative=True, i=1)[0])
             for (i, xi) in enumerate(list_x)
             for (j, yj) in enumerate(list_y)
             ]
         for coord_value in mean_sigma_flat:
             mean[coord_value[:2]] = coord_value[2]
             variance[coord_value[:2]] = coord_value[3]
+            mean_der_x[coord_value[:2]] = coord_value[4]
+            mean_der_y[coord_value[:2]] = coord_value[5]
+            variance_der_x[coord_value[:2]] = coord_value[6]
+            variance_der_y[coord_value[:2]] = coord_value[7]
 
-        return mean, variance
+        return mean, variance, mean_der_x, mean_der_y, variance_der_x, variance_der_y
 
     def _plot_data(self, fig, ax, *, img, x, y, xmin, xmax, ymin,
                    ymax, title, vmin=None, vmax=None):
@@ -371,9 +382,11 @@ class GaussianProcess2d(GaussianProcess):
             img, cmap='viridis', extent=[xmin, xmax, ymin, ymax],
             interpolation='none', vmin=vmin, vmax=vmax
         )
-        fig.colorbar(im, ax=ax)
-        ax.scatter(y, x, c=self.list_y, cmap='viridis', s=50)
-        ax.set_title(title)
+        c = fig.colorbar(im, ax=ax, shrink=0.5)
+        c.ax.tick_params(labelsize=5)
+        ax.scatter(y, x, c=self.list_y, cmap='viridis', s=10)
+        ax.set_axis_off()
+        ax.set_title(title, fontsize=8)
 
     def plot(self, list_x, list_y):
         """Plotting utility
@@ -388,22 +401,51 @@ class GaussianProcess2d(GaussianProcess):
         assert isinstance(list_y, list)
         assert len(list_x) == len(list_y)
 
-        estimation, sigma = self._estimate_gp(list_x, list_y)
+        estimation, sigma, mean_der_x, mean_der_y, sigma_der_x, sigma_der_y = (
+            self._estimate_gp(list_x, list_y)
+        )
         x = [x[0] for x in self.list_observations]
         y = [x[1] for x in self.list_observations]
 
-        fig, ax = plt.subplots(2, 1)
+        fig, ax = plt.subplots(2, 3)
 
         self._plot_data(
-            fig, ax[0],
+            fig, ax[0, 0],
             img=estimation, x=x, y=y,
             xmin=list_x[0], xmax=list_x[-1],
             ymin=list_y[0], ymax=list_y[-1],
-            vmin=0.0, vmax=1.0, title='Estimation'
+            title='Estimation'
         )
         self._plot_data(
-            fig, ax[1],
+            fig, ax[0, 1],
+            img=mean_der_x, x=x, y=y,
+            xmin=list_x[0], xmax=list_x[-1],
+            ymin=list_y[0], ymax=list_y[-1], title='Mean Derivative x'
+        )
+        self._plot_data(
+            fig, ax[0, 2],
+            img=mean_der_y, x=x, y=y,
+            xmin=list_x[0], xmax=list_x[-1],
+            ymin=list_y[0], ymax=list_y[-1], title='Mean Derivative y'
+        )
+        self._plot_data(
+            fig, ax[1, 0],
             img=np.sqrt(sigma), x=x, y=y,
             xmin=list_x[0], xmax=list_x[-1],
             ymin=list_y[0], ymax=list_y[-1], title='Standard Deviation'
+        )
+        self._plot_data(
+            fig, ax[1, 1],
+            img=sigma_der_x, x=x, y=y,
+            xmin=list_x[0], xmax=list_x[-1],
+            ymin=list_y[0], ymax=list_y[-1],
+            title='Standard Deviation Derivative x'
+        )
+
+        self._plot_data(
+            fig, ax[1, 2],
+            img=sigma_der_y, x=x, y=y,
+            xmin=list_x[0], xmax=list_x[-1],
+            ymin=list_y[0], ymax=list_y[-1],
+            title='Standard Deviation Derivative y'
         )

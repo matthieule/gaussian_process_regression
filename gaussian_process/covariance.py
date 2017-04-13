@@ -65,7 +65,7 @@ class SquaredExponential(Covariance):
 
         return self.w0 * np.exp(-euclidean_norm / 2)
 
-    def compute_pd(self, x, y, *, i):
+    def compute_pd(self, x, y, i):
         """Evaluate the partial derivative of the covariance function
 
         The partial derivative is evaluated between x and y at x_i
@@ -76,10 +76,10 @@ class SquaredExponential(Covariance):
         :param i: dimension of x where the partial derivative is evaluated
         :return: partial derivative of the covariance between x and y
         """
+        print(i)
+        return self.compute(x, y) * (-(x[i] - y[i]) / (self.w1[i]**2))
 
-        return self.compute(x, y) * (-(x[i] - y[i]) / self.w1[i] ** 2)
-
-    def compute_pdpd(self, x, y, *, i, j):
+    def compute_pdpd(self, x, y, i, j):
         """Second order partial derivative of the covariance function
 
         The partial derivative is evaluated between x and y at x_i and y_j

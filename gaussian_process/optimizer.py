@@ -61,9 +61,11 @@ class LikelihoodOptimizer(object, metaclass=ABCMeta):
 
         return gp
 
-    def maximum_likelihood(self):
+    def maximum_likelihood(self, method='COBYLA', maxiter=1000):
         """Maximize the likelihood
 
+        :param method: string, method to use for optimization
+        :param maxiter: int, maximum number of iterations
         :return: results of the optimization
         """
 
@@ -73,7 +75,8 @@ class LikelihoodOptimizer(object, metaclass=ABCMeta):
             return -self._get_current_likelihood(param)
 
         res = minimize(likelihood_optimization_func, self.initial_guess,
-                       method='COBYLA', options={'disp': True})
+                       method=method,
+                       options={'disp': True, 'maxiter': maxiter})
         self.initial_guess = res.x
         return res
 
