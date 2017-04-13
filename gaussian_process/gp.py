@@ -331,6 +331,21 @@ class GaussianProcess1d(GaussianProcess):
 class GaussianProcess2d(GaussianProcess):
     """2D Gaussian process"""
 
+    @staticmethod
+    def _get_estimation(function, derivative, index, list_x, list_y):
+
+        n = len(list_x)
+        current_estimation = np.zeros((n, n))
+        current_estimation_flat = [
+            (i, j, function([(xi, yj)], derivative=derivative, i=index)[0])
+            for (i, xi) in enumerate(list_x)
+            for (j, yj) in enumerate(list_y)
+            ]
+        for coord_value in current_estimation_flat:
+            current_estimation[coord_value[:2]] = coord_value[2]
+
+        return current_estimation
+
     def _estimate_gp(self, list_x, list_y):
         """Estimate the Gaussian process mean and variance
 
@@ -346,33 +361,26 @@ class GaussianProcess2d(GaussianProcess):
         assert isinstance(list_y, list)
         assert len(list_x) == len(list_y)
 
-        n = len(list_x)
+        # Dictionary with key the name of the estimation, and value a list with
+        # [{function_used_to_estimate}, {derivative}, {i}], where derivative
+        # and i are parameters of function_used_to_estimate
+        params = {
+            'mean': [self.mean, False, None],
+            'mean_x': [self.mean, True, 0],
+            'mean_y': [self.mean, True, 1],
+            'sigma': [self.sigma, False, None],
+            'sigma_x': [self.sigma, True, 0],
+            'sigma_y': [self.sigma, True, 1],
+        }
+        result = {}
+        for param_key in params:
+            param = params[param_key]
+            current_estimation = self._get_estimation(
+                    param[0], param[1], param[2], list_x, list_y
+            )
+            result[param_key] = current_estimation
 
-        mean = np.zeros((n, n))
-        variance = np.zeros((n, n))
-        mean_der_x = np.zeros((n, n))
-        variance_der_x = np.zeros((n, n))
-        mean_der_y = np.zeros((n, n))
-        variance_der_y = np.zeros((n, n))
-
-        mean_sigma_flat = [
-            (i, j, self.mean([(xi, yj)])[0], self.sigma([(xi, yj)])[0],
-             self.mean([(xi, yj)], derivative=True, i=0)[0],
-             self.mean([(xi, yj)], derivative=True, i=1)[0],
-             self.sigma([(xi, yj)], derivative=True, i=0)[0],
-             self.sigma([(xi, yj)], derivative=True, i=1)[0])
-            for (i, xi) in enumerate(list_x)
-            for (j, yj) in enumerate(list_y)
-            ]
-        for coord_value in mean_sigma_flat:
-            mean[coord_value[:2]] = coord_value[2]
-            variance[coord_value[:2]] = coord_value[3]
-            mean_der_x[coord_value[:2]] = coord_value[4]
-            mean_der_y[coord_value[:2]] = coord_value[5]
-            variance_der_x[coord_value[:2]] = coord_value[6]
-            variance_der_y[coord_value[:2]] = coord_value[7]
-
-        return mean, variance, mean_der_x, mean_der_y, variance_der_x, variance_der_y
+        return result
 
     def _plot_data(self, fig, ax, *, img, x, y, xmin, xmax, ymin,
                    ymax, title, vmin=None, vmax=None):
@@ -382,7 +390,7 @@ class GaussianProcess2d(GaussianProcess):
             img, cmap='viridis', extent=[xmin, xmax, ymin, ymax],
             interpolation='none', vmin=vmin, vmax=vmax
         )
-        c = fig.colorbar(im, ax=ax, shrink=0.5)
+        c = fig.colorbar(im, ax=ax, shrink=.5)
         c.ax.tick_params(labelsize=5)
         ax.scatter(y, x, c=self.list_y, cmap='viridis', s=10)
         ax.set_axis_off()
@@ -401,51 +409,17 @@ class GaussianProcess2d(GaussianProcess):
         assert isinstance(list_y, list)
         assert len(list_x) == len(list_y)
 
-        estimation, sigma, mean_der_x, mean_der_y, sigma_der_x, sigma_der_y = (
-            self._estimate_gp(list_x, list_y)
-        )
+        result = self._estimate_gp(list_x, list_y)
         x = [x[0] for x in self.list_observations]
         y = [x[1] for x in self.list_observations]
 
-        fig, ax = plt.subplots(2, 3)
-
-        self._plot_data(
-            fig, ax[0, 0],
-            img=estimation, x=x, y=y,
-            xmin=list_x[0], xmax=list_x[-1],
-            ymin=list_y[0], ymax=list_y[-1],
-            title='Estimation'
-        )
-        self._plot_data(
-            fig, ax[0, 1],
-            img=mean_der_x, x=x, y=y,
-            xmin=list_x[0], xmax=list_x[-1],
-            ymin=list_y[0], ymax=list_y[-1], title='Mean Derivative x'
-        )
-        self._plot_data(
-            fig, ax[0, 2],
-            img=mean_der_y, x=x, y=y,
-            xmin=list_x[0], xmax=list_x[-1],
-            ymin=list_y[0], ymax=list_y[-1], title='Mean Derivative y'
-        )
-        self._plot_data(
-            fig, ax[1, 0],
-            img=np.sqrt(sigma), x=x, y=y,
-            xmin=list_x[0], xmax=list_x[-1],
-            ymin=list_y[0], ymax=list_y[-1], title='Standard Deviation'
-        )
-        self._plot_data(
-            fig, ax[1, 1],
-            img=sigma_der_x, x=x, y=y,
-            xmin=list_x[0], xmax=list_x[-1],
-            ymin=list_y[0], ymax=list_y[-1],
-            title='Standard Deviation Derivative x'
-        )
-
-        self._plot_data(
-            fig, ax[1, 2],
-            img=sigma_der_y, x=x, y=y,
-            xmin=list_x[0], xmax=list_x[-1],
-            ymin=list_y[0], ymax=list_y[-1],
-            title='Standard Deviation Derivative y'
-        )
+        fig, axs = plt.subplots(2, 3)
+        ordered_plot = np.sort(list(result.keys()))
+        for result_key, ax in zip(ordered_plot, axs.ravel()):
+            self._plot_data(
+                fig, ax,
+                img=result[result_key], x=x, y=y,
+                xmin=list_x[0], xmax=list_x[-1],
+                ymin=list_y[0], ymax=list_y[-1],
+                title=result_key
+            )
