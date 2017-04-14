@@ -9,6 +9,19 @@ The code is mainly based on three classes:
 
 Example scripts are in the `script` folder
 
+## Using the Code
+
+Example usage can be found in `script/example_1d.py` and `script/example_2d.py`.
+To extend the code with new covariance function, one would need to:
+- Define a subclass of `Covariance` implementing the abstract methods
+- Define a subclass of `LikelihoodOptimizer` implementing the method `_instantiate_covariance` which details how to instantiate the covariance from an array input parameter
+
+Some notes:
+- The list of observation `list_observations` is assumed to be a list of tuple corresponding to the position in the parameter space where the function is evaluated
+- The list of evaluation `list_y` is assumed to be a list of scalar corresponding to the evaluation of the target function on the parameter in `list_observations`
+- We assume that `list_observations` and `list_y` have the same order
+
+
 ## 1D Example
 
 In this 1D example, we want to regress the simple 1D function:
