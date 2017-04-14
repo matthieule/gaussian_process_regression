@@ -49,9 +49,18 @@ In this 2D example, we want to regress the simple 2D function:
 
 Here is the result of the regression using a squared exponential covariance function, and 80 data points:
 
-<img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/2d_estimation.png" alt="alt text" width=600px>
+<img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/2d_estimation.png" alt="alt text" width=1200px>
 
-All the pictures from this example can be reproduced by running
+From left to right, and top to bottom: mean of the Gaussian process, derivative along the first axis of the mean, derivative along 
+the second axis of the mean, standard deviation of the Gaussian process, derivative along the first axis of the standard deviation, derivative along 
+the second axis of the standard deviation.
+
+We also computed the empirical derivative of the mean and standard deviation using `np.gradient` to check
+the sanity of our results:
+
+<img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/2d_estimation_empricial_derivative.png" alt="alt text" width=1200px>
+
+All the pictures from this example (except the last one ;)) can be reproduced by running
 
 ```python
 python script/example_2d.py 
