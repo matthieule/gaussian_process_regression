@@ -87,14 +87,17 @@ def main():
     ymin = 0
     ymax = 3.0
 
+    np.random.seed(0)
     example_interpolation(
         xmin, xmax, ymin, ymax, 0.5, 0.3, 'figures/small_covariance'
     )
+    np.random.seed(0)
     example_interpolation(
         xmin, xmax, ymin, ymax, 0.5, 0.5, 'figures/large_covariance'
     )
 
     plot_density(xmin, xmax, ymin, ymax, 20)
+    np.random.seed(0)
     list_observations, list_y = get_observations(xmin, xmax, 10)
 
     # Optimize the parameters of the covariance function
