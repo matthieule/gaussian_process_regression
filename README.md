@@ -21,6 +21,12 @@ Some notes:
 - The list of evaluation `list_y` is assumed to be a list of scalar corresponding to the evaluation of the target function on the parameter in `list_observations`
 - We assume that `list_observations` and `list_y` have the same order
 
+## To Do
+
+- [ ] Keep the mean and resolution of the linear system in the state of the GP class for faster computations
+- [ ] Re-work the figure with the empirical derivative such that they correspond to the analytics ones
+- [ ] Add figures of the empirical standard deviation by sampling the GP and showing it corresponds to the analytical one
+
 
 ## 1D Example
 
