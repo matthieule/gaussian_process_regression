@@ -405,8 +405,11 @@ class GaussianProcess2d(GaussianProcess):
         return result
 
     def _plot_data(self, fig, ax, *, img, x, y, xmin, xmax, ymin,
-                   ymax, title, vmin=None, vmax=None):
+                   ymax, title):
         """Plotting utility"""
+
+        vmin = np.min(img)
+        vmax = np.max(img)
 
         im = ax.imshow(
             img, cmap='viridis', extent=[xmin, xmax, ymin, ymax],
@@ -414,7 +417,8 @@ class GaussianProcess2d(GaussianProcess):
         )
         c = fig.colorbar(im, ax=ax, shrink=.5)
         c.ax.tick_params(labelsize=5)
-        ax.scatter(y, x, c=self.list_y, cmap='viridis', s=10)
+        ax.scatter(y, x, c=self.list_y, cmap='viridis', s=10,
+                   vmin=vmin, vmax=vmax)
         ax.set_axis_off()
         ax.set_title(title, fontsize=8)
 
@@ -432,6 +436,7 @@ class GaussianProcess2d(GaussianProcess):
         assert len(list_x) == len(list_y)
 
         result = self._estimate_gp(list_x, list_y)
+
         x = [x[0] for x in self.list_observations]
         y = [x[1] for x in self.list_observations]
 

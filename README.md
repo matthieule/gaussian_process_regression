@@ -46,7 +46,7 @@ We can see that there is probably a "sweet spot" for which the covariance parame
 
 <img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/1d_estimation.png" alt="alt text" width=500px>
 
-The blue line is the mean of the interpolating Gaussian process, the green lines are the +/- one variance.
+The blue line is the mean of the interpolating Gaussian process, the green lines are the +/- two standard deviation.
 
 All the pictures from this example can be reproduced by running
 

@@ -93,7 +93,7 @@ def main():
     logger.info('Optimize the Gaussian process')
     opt = SECovLikelihoodOptimizer(
         SquaredExponential, list_observations,
-        list_y, initial_guess=np.array([1.0, 1.0, 1.0]), noise=1e-3
+        list_y, initial_guess=np.array([1.0, 1.0, 1.0]), noise=1e-6
     )
     res = opt.maximum_likelihood()
     logger.info(res)
