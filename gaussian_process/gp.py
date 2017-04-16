@@ -35,6 +35,9 @@ class GaussianProcess:
         self.cov_matrix = np.zeros((0, 0))
         self.noise = noise
 
+        self._sigma_inv_times_centered_y = None
+        self._mean_y = None
+
     @staticmethod
     def _center_data(list_y):
         """Center the list
@@ -113,6 +116,37 @@ class GaussianProcess:
         )
         self.list_observations = [obs for obs, y in list_observations_y]
         self.list_y = [y for obs, y in list_observations_y]
+
+    def _solve_linear_system(self):
+        """Solve the linear system to compute _sigma_inv_times_centered_y"""
+
+        # Solve the linear system
+        centered_list_y, mean = self._center_data(self.list_y)
+        y = np.linalg.solve(self.cov_matrix, centered_list_y)
+        # Assert the resolution of the linear system went well
+        assert np.allclose(np.array(centered_list_y), self.cov_matrix @ y)
+
+        return y, mean
+
+    def _update_mean_and_sigma_inv_times_centered_y(self):
+        """Update the empirical mean of list_y and solve the linear system
+
+        For improved speed, the solution of _sigma_inv_times_centered_y is
+        part of the class state. This is where it is update if it has not
+        been computed before, or if new observation has been added
+        """
+
+        if self._sigma_inv_times_centered_y is not None:
+            update_condition = (
+                len(self._sigma_inv_times_centered_y) != len(self.list_y)
+            )
+        else:
+            update_condition = self._mean_y is None
+
+        if update_condition:
+            y, mean = self._solve_linear_system()
+            self._sigma_inv_times_centered_y = y
+            self._mean_y = mean
 
     def add_observation(self, x, y):
         """Add an observation
@@ -194,13 +228,9 @@ class GaussianProcess:
 
         # Compute the correlation between the parameter x and the observation
         current_cov = cov_function(x, self.list_observations)
-        # Solve the linear system
-        centered_list_y, mean = self._center_data(self.list_y)
-        y = np.linalg.solve(self.cov_matrix, centered_list_y)
-        # Assert the resolution of the linear system went well
-        assert np.allclose(np.array(centered_list_y), self.cov_matrix @ y)
+        self._update_mean_and_sigma_inv_times_centered_y()
 
-        return mean + current_cov @ y
+        return self._mean_y + current_cov @ self._sigma_inv_times_centered_y
 
     def sample(self, x):
         """Sample a Gaussian process on x

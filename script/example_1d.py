@@ -32,7 +32,7 @@ def example_interpolation(xmin, xmax, ymin, ymax,
     gp.covariance_matrix()
 
     # Plot the interpolation
-    x_vec = np.linspace(xmin, xmax, 50)
+    x_vec = np.linspace(xmin, xmax, 200)
     x_vec = [(x,) for x in x_vec]
     gp.plot(list_x=x_vec, ymin=ymin, ymax=ymax, confidence_band=False)
     plt.savefig(title, dpi=150, bbox_inches='tight')
@@ -89,14 +89,14 @@ def main():
 
     np.random.seed(0)
     example_interpolation(
-        xmin, xmax, ymin, ymax, 0.5, 0.3, 'figures/small_covariance'
+        xmin, xmax, ymin, ymax, 0.2, 0.2, 'figures/small_covariance'
     )
     np.random.seed(0)
     example_interpolation(
-        xmin, xmax, ymin, ymax, 0.5, 0.5, 'figures/large_covariance'
+        xmin, xmax, ymin, ymax, 0.2, 0.5, 'figures/large_covariance'
     )
 
-    plot_density(xmin, xmax, ymin, ymax, 20)
+    plot_density(xmin, xmax, ymin, ymax, 100)
     np.random.seed(0)
     list_observations, list_y = get_observations(xmin, xmax, 10)
 
@@ -120,7 +120,7 @@ def main():
 
     # Plot the interpolation
     logger.info('Plot the interpolation')
-    x_vec = np.linspace(xmin, xmax, 50)
+    x_vec = np.linspace(xmin, xmax, 100)
     x_vec = [(x,) for x in x_vec]
     gp.plot(list_x=x_vec, ymin=ymin, ymax=ymax, n_samples=0)
     plt.savefig('figures/1d_estimation.png', dpi=150, bbox_inches='tight')

@@ -39,7 +39,7 @@ We use a Gaussian process with the squared exponential covariance function:
 `cov(x, y) = w0 exp(-1/2*(x-y)^2/w1^2)`
 
 The parameter `w1` corresponds to the correlation between the data point: the larger it is, the larger the point are assumed correlated.
-Here is an example of the Gaussian process interpolation using 10 random data points and `w1 = 0.3`:
+Here is an example of the Gaussian process interpolation using 10 random data points and `w1 = 0.2`:
 
 <img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/small_covariance.png" alt="alt text" width=500px>
 
