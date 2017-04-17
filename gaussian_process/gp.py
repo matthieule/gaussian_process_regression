@@ -232,11 +232,11 @@ class GaussianProcess:
 
         return self._mean_y + current_cov @ self._sigma_inv_times_centered_y
 
-    def sample(self, x):
+    def sample_generator(self, x):
         """Sample a Gaussian process on x
 
-        :param x: parameter where to sample the Gaussian process
-        :return: a sample from the Gaussian process
+        :param x: parameter where to sample_generator the Gaussian process
+        :return: a sample_generator from the Gaussian process
         """
 
         assert isinstance(x, list)
@@ -253,10 +253,11 @@ class GaussianProcess:
         d[d < FUZZ] = FUZZ
         d_sqrt = np.sqrt(d)
 
-        sample = np.random.normal(loc=0, scale=1, size=len(x))
-        sample = mean + u@np.diag(d_sqrt)@sample
+        while True:
+            sample = np.random.normal(loc=0, scale=1, size=len(x))
+            sample = mean + u@np.diag(d_sqrt)@sample
 
-        return sample
+            yield sample
 
     def sigma(self, x, derivative=False, i=None):
         """Compute the conditional variance of the Gaussian process
@@ -350,9 +351,12 @@ class GaussianProcess1d(GaussianProcess):
         assert isinstance(list_x, list)
 
         mean, sigma = self._estimate_gp(list_x)
+        sample_generator = self.sample_generator(list_x)
 
         for _ in range(n_samples):
-            plt.plot(list_x, self.sample(list_x), color='black', linewidth='1')
+            plt.plot(
+                list_x, next(sample_generator), color='black', linewidth='1'
+            )
         if confidence_band:
             plt.plot(list_x, mean + 2*np.sqrt(sigma), color='g',
                      linewidth='2')
@@ -470,7 +474,7 @@ class GaussianProcess2d(GaussianProcess):
         x = [x[0] for x in self.list_observations]
         y = [x[1] for x in self.list_observations]
 
-        fig, axs = plt.subplots(2, 3)
+        fig, axs = plt.subplots(3, 3)
         ordered_plot = np.sort(list(result.keys()))
         for result_key, ax in zip(ordered_plot, axs.ravel()):
             self._plot_data(
@@ -480,3 +484,24 @@ class GaussianProcess2d(GaussianProcess):
                 ymin=list_y[0], ymax=list_y[-1],
                 title=result_key
             )
+        # Plot the empirical standard deviation
+        full_list_tuple = [(x, y) for x in list_x for y in list_y]
+        sample_generator = self.sample_generator(full_list_tuple)
+        samples = []
+        for i in range(50):
+            current_sample = next(sample_generator)
+            current_sample = np.reshape(
+                current_sample, (len(list_x), len(list_y))
+            )
+            samples.append(current_sample)
+        samples = np.array(samples)
+        std_empirical = np.std(samples, axis=0)
+        self._plot_data(
+            fig, axs[2, 0],
+            img=std_empirical, x=x, y=y,
+            xmin=list_x[0], xmax=list_x[-1],
+            ymin=list_y[0], ymax=list_y[-1],
+            title='Empirical std'
+        )
+        axs[2, 1].set_axis_off()
+        axs[2, 2].set_axis_off()

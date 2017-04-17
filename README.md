@@ -72,12 +72,13 @@ Here is the result of the regression using a squared exponential covariance func
 
 From left to right, and top to bottom: mean of the Gaussian process, derivative along the first axis of the mean, derivative along 
 the second axis of the mean, standard deviation of the Gaussian process, derivative along the first axis of the standard deviation, derivative along 
-the second axis of the standard deviation.
+the second axis of the standard deviation, empirical standard deviation using 50 samples of the 2D Gaussian process. The fact that the analytical
+standard deviation and the empirical one look similar is a good sanity check to make sure the standard deviation and the samples are correctly computed.
 
 We also computed the empirical derivative of the mean and standard deviation using `np.gradient` to check
 the sanity of our results:
 
-<img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/2d_estimation_empricial_derivative.png" alt="alt text" width=1200px>
+<img src="https://github.com/matthieule/gaussian_process_regression/blob/master/figures/2d_estimation_empirical.png" alt="alt text" width=1200px>
 
 All the pictures from this example (except the last one ;)) can be reproduced by running
 
