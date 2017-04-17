@@ -21,9 +21,10 @@ Some notes:
 - The list of evaluation `list_y` is assumed to be a list of scalar corresponding to the evaluation of the target function on the parameter in `list_observations`
 - We assume that `list_observations` and `list_y` have the same order
 
+This code is meant to play around with Gaussian processes for regression, if one wants to do more "serious" work, one would want to checkout [GPFlow](https://github.com/GPflow/GPflow) 
+
 ## To Do
 
-- [ ] Link to the tensorflow implementation of GP for "real" work
 - Extend the bibliography
 
 
