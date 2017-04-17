@@ -23,9 +23,8 @@ Some notes:
 
 ## To Do
 
-- [ ] Keep the mean and resolution of the linear system in the state of the GP class for faster computations
-- [ ] Re-work the figure with the empirical derivative such that they correspond to the analytics ones
-- [ ] Add figures of the empirical standard deviation by sampling the GP and showing it corresponds to the analytical one
+- [ ] Link to the tensorflow implementation of GP for "real" work
+- Extend the bibliography
 
 
 ## 1D Example
