@@ -20,6 +20,7 @@ def density(x, y):
     """
 
     a = np.exp(-(1-(x**2/2+y**2/0.5))**2/0.5)
+
     return a
 
 
@@ -93,7 +94,7 @@ def main():
     logger.info('Optimize the Gaussian process')
     opt = SECovLikelihoodOptimizer(
         SquaredExponential, list_observations,
-        list_y, initial_guess=np.array([1.0, 1.0, 1.0]), noise=1e-6
+        list_y, initial_guess=np.array([1.0, 1.0, 1.0]), noise=1e-3
     )
     res = opt.maximum_likelihood()
     logger.info(res)
@@ -103,7 +104,7 @@ def main():
     cov = SquaredExponential(res.x[0], res.x[1:])
     gp = GaussianProcess2d(
         covariance=cov, list_observations=list_observations,
-        list_y=list_y
+        list_y=list_y, noise=1e-3
     )
     gp.covariance_matrix()
 

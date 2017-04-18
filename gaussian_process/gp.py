@@ -230,7 +230,9 @@ class GaussianProcess:
         current_cov = cov_function(x, self.list_observations)
         self._update_mean_and_sigma_inv_times_centered_y()
 
-        return self._mean_y + current_cov @ self._sigma_inv_times_centered_y
+        mean = 0 if derivative else self._mean_y
+
+        return mean + current_cov @ self._sigma_inv_times_centered_y
 
     def sample_generator(self, x):
         """Sample a Gaussian process on x
