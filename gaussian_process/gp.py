@@ -473,7 +473,7 @@ class GaussianProcess2d(GaussianProcess):
 
         result = self._estimate_gp(list_x, list_y)
 
-        x = [x[0] for x in self.list_observations]
+        x = [-x[0] for x in self.list_observations]
         y = [x[1] for x in self.list_observations]
 
         fig, axs = plt.subplots(3, 3)
